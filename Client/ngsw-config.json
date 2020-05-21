@@ -1,0 +1,65 @@
+{
+  "$schema": "./node_modules/@angular/service-worker/config/schema.json",
+  "index": "/index.html",
+  "assetGroups": [{
+    "name": "app",
+    "installMode": "prefetch",
+    "resources": {
+      "files": [
+        "/favicon.ico",
+        "/index.html",
+        "/manifest.json",
+        "/*.css",
+        "/*.js"
+      ]      
+    }
+  }, {
+    "name": "assets",
+    "installMode": "lazy",
+    "updateMode": "prefetch",
+    "resources": {
+      "files": [
+        "/assets/**",
+        "/*.(eot|svg|cur|jpg|png|webp|gif|otf|ttf|woff|woff2|ani)"
+      ],
+      "urls":[
+        "https://fonts.googleapis.com/icon?family=Material+Icons",
+        "https://fonts.googleapis.com/css?family=Roboto:300,400,500&display=swap"
+      ]
+    }
+  }],
+
+
+  "dataGroups": [{
+      "name": "api-freshness",
+      "urls": [
+        "/**"
+      ],
+      "version": 1,
+      "cacheConfig": {
+        "maxSize": 100,
+        "maxAge": "10m",
+        "timeout": "8s",
+        "strategy": "freshness"
+      }
+    },
+    {
+      "name": "api-performance",
+      "urls": [
+        "/api/TransactionStatuses/**",
+        "/api/TransactionTypes/**",
+        "/api/BudgetCategories/**"
+      ],
+      "version": 1,
+      "cacheConfig": {
+        "maxSize": 100,
+        "maxAge": "5d",
+        "timeout": "500u",
+        "strategy": "performance"
+      }
+    }
+  ],
+  "navigationUrls": [
+    "!/**"
+  ]
+}

@@ -1,0 +1,32 @@
+<div class="login-wrapper" fxLayout="row" fxLayoutAlign="center center">
+    <mat-card class="box">
+        <mat-card-header>
+            <mat-card-title>Log in</mat-card-title>
+        </mat-card-header>
+
+        <form class="form" [formGroup]="form" (ngSubmit)="login()">
+            <mat-card-content>
+                <mat-form-field class="full-width">
+                    <input type="email" matInput placeholder="Email Address" formControlName="email">
+                </mat-form-field>
+
+                <mat-form-field class="full-width">
+                    <input matInput type="password" placeholder="Password" formControlName="password">
+                </mat-form-field>
+
+                <mat-checkbox formControlName="rememberMe">Remember Me?</mat-checkbox>
+            </mat-card-content>
+            
+            <button type="submit" mat-stroked-button color="accent" class="log-in btn-block" [disabled]="loading">
+                Log In
+                <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+            </button>
+            
+            <div class="forgot-password">
+                <a routerLink="/forgot-password">Forgot Password?</a>
+            </div>
+        </form>
+
+        <div *ngIf="error && error.length > 0" class="error-message">ERROR: {{error}}</div>
+    </mat-card>
+</div>
