@@ -35,13 +35,13 @@ namespace JwtIdentityAPI.Services
 
 
         // users hardcoded for simplicity, store in a db with hashed passwords in production applications
-   
+
         private readonly JwtSettings jwtSettings;
 
         public AuthService(
             IOptions<JwtSettings> jwtSettings,
-            UserManager<IdentityUser> userManager, 
-            SignInManager<IdentityUser> signInManager, 
+            UserManager<IdentityUser> userManager,
+            SignInManager<IdentityUser> signInManager,
             IConfiguration config)
         {
             this.jwtSettings = jwtSettings.Value;
@@ -49,7 +49,7 @@ namespace JwtIdentityAPI.Services
             this.signInManager = signInManager;
             this.config = config;
         }
-        
+
         public async Task<IdentityUser> GetIdentityUserByEmail(string userEmail)
         {
             var identityUser = await userManager.FindByEmailAsync(userEmail);
@@ -75,7 +75,7 @@ namespace JwtIdentityAPI.Services
             return true;
         }
 
-        
+
 
 
         public async Task<string> GenerateJwtToken(IAccountViewModel model)
@@ -86,7 +86,7 @@ namespace JwtIdentityAPI.Services
             var claims = await CreateClaims(model);
 
             var claimsDictionary = new Dictionary<string, object>();
-            foreach (var claim in claims) 
+            foreach (var claim in claims)
             {
                 claimsDictionary.Add(claim.Type, claim.Value);
             }
@@ -104,7 +104,7 @@ namespace JwtIdentityAPI.Services
             return jwtTokenHandler.WriteToken(jwtToken);
         }
 
-       
+
 
         public async Task<string> GenerateRefreshToken(string userEmail)
         {
@@ -113,7 +113,7 @@ namespace JwtIdentityAPI.Services
         }
 
         public async Task<string> GenerateRefreshToken(IdentityUser identityUser)
-        {            
+        {
             await userManager.RemoveAuthenticationTokenAsync(identityUser, "Default", "RefreshToken");
             var newRefreshToken = await userManager.GenerateUserTokenAsync(identityUser, "Default", "RefreshToken");
             await userManager.SetAuthenticationTokenAsync(identityUser, "Default", "RefreshToken", newRefreshToken);
@@ -141,7 +141,10 @@ namespace JwtIdentityAPI.Services
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(key),
                 ValidateIssuer = false,
-                ValidateAudience = false
+                ValidateAudience = false,
+                ValidateLifetime = false,
+                ClockSkew = TimeSpan.Zero
+
             };
 
             var tokenHandler = new JwtSecurityTokenHandler();
