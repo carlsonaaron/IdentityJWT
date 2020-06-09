@@ -9,7 +9,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
-using static HomePortalAPI.ViewModels.AccountViewModels;
+using static IdentityJwtAPI.ViewModels.AccountViewModels;
 
 namespace IdentityJwtAPI.Services
 {

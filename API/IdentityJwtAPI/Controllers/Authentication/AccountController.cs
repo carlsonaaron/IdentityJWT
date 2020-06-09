@@ -7,9 +7,9 @@ using IdentityJwtAPI.Services;
 using IdentityJwtAPI.Services.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using static HomePortalAPI.ViewModels.AccountViewModels;
+using static IdentityJwtAPI.ViewModels.AccountViewModels;
 
-namespace HomePortalAPI.Controllers.Account
+namespace IdentityJwtAPI.Controllers.Account
 {
     [Route("[controller]")]
     [Authorize]

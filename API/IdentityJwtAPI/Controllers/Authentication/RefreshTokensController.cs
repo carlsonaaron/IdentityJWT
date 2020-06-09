@@ -1,13 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using HomePortalAPI.ViewModels;
+using IdentityJwtAPI.ViewModels;
 using IdentityJwtAPI.Models.Authentication;
 using IdentityJwtAPI.Services.Authentication;
 using JwtIdentityAPI.Statics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace HomePortalAPI.Controllers.Account
+namespace IdentityJwtAPI.Controllers.Account
 {
     [ApiController]
     [Route("[controller]")]

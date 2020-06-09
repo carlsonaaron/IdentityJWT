@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace HomePortalAPI.ViewModels
+namespace IdentityJwtAPI.ViewModels
 {
     public class AccountViewModels
     {

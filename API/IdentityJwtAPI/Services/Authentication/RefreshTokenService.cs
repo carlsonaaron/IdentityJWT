@@ -72,7 +72,7 @@ namespace IdentityJwtAPI.Services.Authentication
 
         public async Task<bool> DeleteRefreshToken(string tokenId)
         {
-            var token = await context.RefreshTokens.SingleOrDefaultAsync(rt => rt.Id == new Guid(tokenId));
+            var token = await context.RefreshTokens.SingleOrDefaultAsync(rt => rt.Id == tokenId);
             if (token == null)
                 return false;
 

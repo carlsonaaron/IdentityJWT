@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace HomePortalAPI.Controllers.Account
+namespace IdentityJwtAPI.Controllers.Account
 {
     [ApiController]
     [Route("[controller]")]
