@@ -16,8 +16,8 @@
 ### These setup instructions are written based on Visual Studio 2019 (Windows 10)
 1. Clone/download project
 1. Run Create Datebase Migration for IdentityContext to build the identity database tables
-    - `add-migration SetupIdentityTables -context IdentityContext`
-    - `update-database -context IdentityContext`
+    - `add-migration initial`
+    - `update-database`
 1. Run project... you should see the JWT/Identity API swagger API documentation screen pop up
 
 ## Auto-seeded login user accounts
