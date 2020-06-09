@@ -1,23 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
-using System.Text;
 using System.Threading.Tasks;
-using JwtIdentityAPI.Models.Account;
-using JwtIdentityAPI.Services;
-using JwtIdentityAPI.Services.Authentication;
-using Microsoft.AspNetCore.Authentication;
+using IdentityJwtAPI.Models.Authentication;
+using IdentityJwtAPI.Services;
+using IdentityJwtAPI.Services.Authentication;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.Net.Http.Headers;
-using static JwtIdentityAPI.ViewModels.AccountViewModels;
+using static HomePortalAPI.ViewModels.AccountViewModels;
 
-namespace JwtIdentityAPI.Controllers.Account
+namespace HomePortalAPI.Controllers.Account
 {
     [Route("[controller]")]
     [Authorize]
@@ -25,11 +17,13 @@ namespace JwtIdentityAPI.Controllers.Account
     public class AccountController : ControllerBase
     {
         private IAuthService authService;
+        private readonly IRefreshTokenService refreshTokenService;
         private readonly IRolesService rolesService;
 
-        public AccountController(IAuthService authService, IRolesService rolesService)
+        public AccountController(IAuthService authService, IRefreshTokenService refreshTokenService, IRolesService rolesService)
         {
             this.authService = authService;
+            this.refreshTokenService = refreshTokenService;
             this.rolesService = rolesService;
         }
 
@@ -87,14 +81,23 @@ namespace JwtIdentityAPI.Controllers.Account
                     return Unauthorized();
                 }
 
-                var authenticationResponse = new AuthenticationResponse
+                var user = await authService.GetIdentityUserByEmail(model.Email);
+                
+                var newRefreshToken = refreshTokenService.GenerateNewRefreshToken(user.Id);
+                await refreshTokenService.RemoveExistingUserRefreshTokens(user.Id);
+                await refreshTokenService.SaveRefreshToken(newRefreshToken);
+
+                var response = new AuthenticationResponse
                 {
+                    Id = user.Id,
                     Email = model.Email,
-                    JwtToken = await authService.GenerateJwtToken(model),
-                    RefreshToken = await authService.GenerateRefreshToken(model.Email)
+                    Roles = await rolesService.GetRolesByUserId(user.Id),
+                    RefreshToken = newRefreshToken.Token
                 };
 
-                return Ok(authenticationResponse);
+                response.JwtToken = await authService.GenerateJwtToken(response);
+
+                return Ok(response);
             }
             catch (Exception ex)
             {
@@ -109,21 +112,28 @@ namespace JwtIdentityAPI.Controllers.Account
         {
             var principalFromExpiredAccessToken = authService.GetPrincipalFromExpiredToken(request.AccessToken);
             var email = principalFromExpiredAccessToken.FindFirstValue(ClaimTypes.Name);
+            var userId = principalFromExpiredAccessToken.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var tokenIsValid = await refreshTokenService.ValidateRefreshToken(userId, request.RefreshToken);
             
+            if (!tokenIsValid)
+                return Ok(null);
 
-            var updatedRefreshToken = await authService.ValidateAndRenewRefreshToken(email, request.RefreshToken);
+            var newRefreshToken = refreshTokenService.GenerateNewRefreshToken(userId);
+            await refreshTokenService.RemoveExistingUserRefreshTokens(userId);
+            await refreshTokenService.SaveRefreshToken(newRefreshToken);
 
-            var model = new AccountViewModel { Email = email };
-
-            var authenticationResponse = new AuthenticationResponse
+            var response = new AuthenticationResponse
             {
+                Id = userId,
                 Email = email,
-                JwtToken = await authService.GenerateJwtToken(model),
-                RefreshToken = updatedRefreshToken
+                Roles = await rolesService.GetRolesByUserId(userId),
+                RefreshToken = newRefreshToken.Token
             };
 
+            response.JwtToken = await authService.GenerateJwtToken(response);
 
-            return Ok(authenticationResponse);
+            return Ok(response);
         }
 
 
@@ -133,12 +143,6 @@ namespace JwtIdentityAPI.Controllers.Account
         {
             await authService.Logout();
             return Ok();
-        }
-
-
-        
+        }        
     }
-
-
-
 }

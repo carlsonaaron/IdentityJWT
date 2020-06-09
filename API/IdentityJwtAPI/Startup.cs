@@ -4,19 +4,16 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using JwtIdentityAPI.Services;
 using Microsoft.OpenApi.Models;
-using System.Linq;
 using Newtonsoft.Json.Linq;
 using Microsoft.AspNetCore.Identity;
-using JwtIdentityAPI.Models.Account;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using JwtIdentityAPI.Services.Authentication;
-using System.Collections.Generic;
 using System;
+using IdentityJwtAPI.Services;
+using IdentityJwtAPI.Models.Authentication;
+using IdentityJwtAPI.Services.Authentication;
 
 namespace JwtIdentityAPI
 {
@@ -36,8 +33,11 @@ namespace JwtIdentityAPI
         public void ConfigureServices(IServiceCollection services)
         {
 
+            //services.AddDbContext<IdentityContext>(options => options.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
+            
             services.AddDbContext<IdentityContext>(options =>
-                options.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+
 
 
             services

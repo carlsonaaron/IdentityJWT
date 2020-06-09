@@ -1,29 +1,25 @@
-﻿using JwtIdentityAPI.Models.Account;
+﻿using IdentityJwtAPI.Models.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using static JwtIdentityAPI.ViewModels.AccountViewModels;
+using static HomePortalAPI.ViewModels.AccountViewModels;
 
-namespace JwtIdentityAPI.Services
+namespace IdentityJwtAPI.Services
 {
     public interface IAuthService
     {
+        Task<IdentityUser> GetIdentityUserByEmail(string userEmail);
         Task<IdentityResult> RegisterUser(RegisterViewModel model);
         Task<SignInResult> Login(LoginViewModel model);
-        Task<string> GenerateJwtToken(IAccountViewModel model);
-        Task<string> GenerateRefreshToken(string userEmail);
-        Task<string> GenerateRefreshToken(IdentityUser user);
+        Task<string> GenerateJwtToken(AuthenticationResponse model);
         ClaimsPrincipal GetPrincipalFromExpiredToken(string token);
-        Task<string> ValidateAndRenewRefreshToken(string userEmail, string refreshToken);
         Task<bool> Logout();
     }
 
@@ -34,17 +30,8 @@ namespace JwtIdentityAPI.Services
         private readonly IConfiguration config;
 
 
-        // users hardcoded for simplicity, store in a db with hashed passwords in production applications
-
-        private readonly JwtSettings jwtSettings;
-
-        public AuthService(
-            IOptions<JwtSettings> jwtSettings,
-            UserManager<IdentityUser> userManager,
-            SignInManager<IdentityUser> signInManager,
-            IConfiguration config)
+        public AuthService(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IConfiguration config)
         {
-            this.jwtSettings = jwtSettings.Value;
             this.userManager = userManager;
             this.signInManager = signInManager;
             this.config = config;
@@ -75,63 +62,6 @@ namespace JwtIdentityAPI.Services
             return true;
         }
 
-
-
-
-        public async Task<string> GenerateJwtToken(IAccountViewModel model)
-        {
-            var jwtTokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(config.GetValue<string>("JwtSettings:SecretKey"));
-
-            var claims = await CreateClaims(model);
-
-            var claimsDictionary = new Dictionary<string, object>();
-            foreach (var claim in claims)
-            {
-                claimsDictionary.Add(claim.Type, claim.Value);
-            }
-
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(claims),
-                Claims = claimsDictionary,
-                Expires = DateTime.UtcNow.AddSeconds(config.GetValue<double>("JwtSettings:TokenExpireSeconds")),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-            };
-
-            var jwtToken = jwtTokenHandler.CreateToken(tokenDescriptor);
-
-            return jwtTokenHandler.WriteToken(jwtToken);
-        }
-
-
-
-        public async Task<string> GenerateRefreshToken(string userEmail)
-        {
-            var identityUser = await userManager.FindByEmailAsync(userEmail);
-            return await GenerateRefreshToken(identityUser);
-        }
-
-        public async Task<string> GenerateRefreshToken(IdentityUser identityUser)
-        {
-            await userManager.RemoveAuthenticationTokenAsync(identityUser, "Default", "RefreshToken");
-            var newRefreshToken = await userManager.GenerateUserTokenAsync(identityUser, "Default", "RefreshToken");
-            await userManager.SetAuthenticationTokenAsync(identityUser, "Default", "RefreshToken", newRefreshToken);
-
-            return newRefreshToken;
-        }
-
-        //private string GenerateRefreshToken()
-        //{
-        //    var randomNumber = new byte[32];
-
-        //    using (var randomNumberGenerator = RandomNumberGenerator.Create())
-        //    {
-        //        randomNumberGenerator.GetBytes(randomNumber);
-        //        return Convert.ToBase64String(randomNumber);
-        //    }
-        //}
-
         public ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
         {
             var key = Encoding.ASCII.GetBytes(config.GetValue<string>("JwtSettings:SecretKey"));
@@ -157,35 +87,39 @@ namespace JwtIdentityAPI.Services
             return principal;
         }
 
-        public async Task<string> ValidateAndRenewRefreshToken(string userEmail, string refreshToken)
+        public async Task<string> GenerateJwtToken(AuthenticationResponse model)
         {
-            var identityUser = await userManager.FindByEmailAsync(userEmail);
+            var jwtTokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(config.GetValue<string>("JwtSettings:SecretKey"));
 
-            var existingRefreshToken = await userManager.GetAuthenticationTokenAsync(identityUser, "Default", "RefreshToken");
+            var claims = await CreateClaims(model);
 
-            if (existingRefreshToken == null)
-                return null;
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.UtcNow.AddSeconds(config.GetValue<double>("JwtSettings:TokenExpireSeconds")),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
 
-            var updatedRefreshToken = await GenerateRefreshToken(identityUser);
+            var jwtToken = jwtTokenHandler.CreateToken(tokenDescriptor);
 
-            return updatedRefreshToken;
-
+            return jwtTokenHandler.WriteToken(jwtToken);
         }
 
-        // ================= 
 
-        private async Task<IList<Claim>> CreateClaims(IAccountViewModel model)
+        private async Task<IList<Claim>> CreateClaims(AuthenticationResponse model)
         {
-            var claims = new List<Claim>();
+            var claims = new List<Claim> {
+                new Claim(ClaimTypes.Name, model.Email),
+                new Claim(ClaimTypes.NameIdentifier, model.Id.ToString()),
+                new Claim(ClaimTypes.Email, model.Email)
+            };
 
-            claims.Add(new Claim(ClaimTypes.Name, model.Email));
-
+            // Add UserRole Claims
             var identityUser = await userManager.FindByEmailAsync(model.Email);
             var roles = await userManager.GetRolesAsync(identityUser);
 
-            claims.AddRange(roles.Select(r => new Claim(ClaimsIdentity.DefaultRoleClaimType, r)));
-
-
+            claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
             return claims;
         }
     }

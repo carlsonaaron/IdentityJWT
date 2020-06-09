@@ -1,4 +1,4 @@
-﻿namespace JwtIdentityAPI.Models.Account
+﻿namespace IdentityJwtAPI.Models.Authentication
 {
     public class RefreshRequest
     {
