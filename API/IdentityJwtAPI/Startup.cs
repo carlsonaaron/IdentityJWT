@@ -79,6 +79,7 @@ namespace JwtIdentityAPI
 
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IRolesService, RolesService>();
+            services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
             services
                 .AddControllers()

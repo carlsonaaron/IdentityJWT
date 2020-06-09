@@ -101,6 +101,7 @@ namespace IdentityJwtAPI.Services.Authentication
 
                 var refreshToken = new RefreshToken
                 {
+                    Id = Guid.NewGuid().ToString(),
                     UserId = userId,
                     ExpirationDateTime = DateTime.UtcNow.AddMinutes(config.GetValue<double>("JwtSettings:RefreshTokenExpireMinutes")),
                     IssuedDateTime = DateTime.UtcNow,
